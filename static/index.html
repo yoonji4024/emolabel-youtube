@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>EmoLabel · Korean SER</title>
+  <link rel="stylesheet" href="/static/style.css?v=20260907-3">
+</head>
+<body>
+  <header id="loader-bar">
+    <div class="brand">
+      <span class="brand-mark" aria-hidden="true">E</span>
+      <div>
+        <h1>EmoLabel</h1>
+        <span class="brand-subtitle">한국어 SER · YouTube Shorts</span>
+      </div>
+    </div>
+    <div class="loader-controls">
+      <input id="url-input" type="url" placeholder="YouTube Shorts URL을 입력하세요"
+             spellcheck="false" autocomplete="off" aria-label="YouTube Shorts URL">
+      <button id="load-btn" class="primary">불러오기</button>
+    </div>
+    <span id="status" class="status" aria-live="polite"></span>
+  </header>
+
+  <main id="workspace" class="hidden">
+    <section id="media-zone">
+      <div class="section-heading">
+        <div>
+          <span class="eyebrow">SOURCE / CLIP</span>
+          <div id="video-meta">
+            <span id="video-title">영상</span>
+            <span id="video-info" class="dim"></span>
+          </div>
+        </div>
+      </div>
+
+      <div id="player-row">
+        <div class="video-shell">
+          <video id="video" playsinline aria-label="선택한 YouTube 영상"></video>
+        </div>
+        <aside id="clip-list-panel">
+          <div class="panel-heading">
+            <h2>현재 영상의 구간</h2>
+            <span class="dim">저장된 구간</span>
+          </div>
+          <ul id="clip-list"></ul>
+        </aside>
+      </div>
+
+      <div class="wave-section">
+        <div class="panel-heading">
+          <h2>발화 구간 선택</h2>
+          <span class="dim">파형을 드래그하여 한 문장을 선택하세요</span>
+        </div>
+        <div id="waveform"></div>
+        <div id="transport">
+          <button id="play-btn" title="Space" aria-label="재생 또는 일시정지">▶ 재생</button>
+          <button id="play-region-btn" title="선택 구간 재생">선택 구간 재생</button>
+          <label class="toggle"><input type="checkbox" id="loop-toggle"> <span>반복 (L)</span></label>
+          <span id="time-readout" class="mono dim">0.00 / 0.00</span>
+          <span class="spacer"></span>
+          <span class="region-tools">
+            <span class="mono">시작 <b id="region-start">–</b></span>
+            <button data-nudge="start:-1f" title="시작 −1프레임">−1f</button>
+            <button data-nudge="start:-0.05">−.05</button>
+            <button data-nudge="start:+0.05">+.05</button>
+            <button data-nudge="start:+1f" title="시작 +1프레임">+1f</button>
+            <button id="set-start-btn" title="[ : 재생 위치를 시작점으로">[ 시작</button>
+            <span class="mono">끝 <b id="region-end">–</b></span>
+            <button data-nudge="end:-1f" title="끝 −1프레임">−1f</button>
+            <button data-nudge="end:-0.05">−.05</button>
+            <button data-nudge="end:+0.05">+.05</button>
+            <button data-nudge="end:+1f" title="끝 +1프레임">+1f</button>
+            <button id="set-end-btn" title="] : 재생 위치를 끝점으로">끝 ]</button>
+            <span class="mono">길이 <b id="region-dur">–</b></span>
+          </span>
+        </div>
+      </div>
+
+      <div id="extract-row">
+        <button id="extract-btn" class="primary" disabled>구간 추출 및 사전 라벨</button>
+        <span id="extract-status" class="status" aria-live="polite"></span>
+      </div>
+    </section>
+
+    <section id="label-panel" class="disabled">
+      <div class="section-heading label-heading">
+        <div>
+          <span class="eyebrow">ANNOTATION / PASS 1</span>
+          <h2>현재 대사 라벨링</h2>
+        </div>
+        <span id="clip-id-label" class="mono dim"></span>
+      </div>
+
+      <div id="qc-line" class="qc-line hidden" aria-label="자동 품질 점검"></div>
+
+      <div class="field">
+        <label for="transcript">대사 확인 <span id="asr-info" class="dim"></span></label>
+        <textarea id="transcript" rows="3" lang="ko"
+                  placeholder="자동 전사 결과를 확인하고 필요한 경우 수정하세요"></textarea>
+      </div>
+
+      <div class="field">
+        <span class="field-name">화자 성별 <span id="gender-info" class="dim"></span></span>
+        <div id="gender-radios" class="radio-row"></div>
+      </div>
+
+      <div class="field">
+        <label for="actor">배우 <span class="dim">확실히 아는 경우에만 입력</span></label>
+        <input type="text" id="actor" lang="ko" placeholder="선택 사항">
+      </div>
+
+      <div class="field emotion-field">
+        <div class="field-heading">
+          <span class="field-name">주 감정 <span class="required">필수</span></span>
+          <span class="dim">사람 판단을 먼저 기록하세요</span>
+        </div>
+        <div id="emotion-radios" class="radio-row emotion"></div>
+      </div>
+
+      <div class="legacy-values" aria-hidden="true">
+        <input type="hidden" id="valence" value="4">
+        <input type="hidden" id="arousal" value="4">
+        <span id="valence-val">4</span>
+        <span id="arousal-val">4</span>
+      </div>
+
+      <div class="field">
+        <label for="notes">품질 및 메모 <span class="dim">CONF · QUALITY · AMBIG · FLAGS</span></label>
+        <input type="text" id="notes" lang="ko"
+               value="CONF=3; QUALITY=A; AMBIG=0; SECONDARY=; FLAGS="
+               placeholder="CONF=3; QUALITY=A; AMBIG=0; SECONDARY=; FLAGS=">
+        <details class="notation-guide">
+          <summary>메모 표기법 보기</summary>
+          <dl>
+            <div>
+              <dt>CONF</dt>
+              <dd><b>3</b> 감정이 명확함 · <b>2</b> 조금 애매하지만 판단 가능 · <b>1</b> 매우 불확실하여 재검토 필요</dd>
+            </div>
+            <div>
+              <dt>QUALITY</dt>
+              <dd><b>A</b> 얼굴·음성이 선명한 단일 화자 · <b>B</b> 작은 문제가 있지만 사용 가능 · <b>C</b> 최종 데이터에서 제외하거나 다시 수집</dd>
+            </div>
+            <div>
+              <dt>AMBIG</dt>
+              <dd><b>0</b> 주 감정이 분명함 · <b>1</b> 감정이 섞였거나 세 번 들어도 판단이 어려움</dd>
+            </div>
+            <div>
+              <dt>SECONDARY</dt>
+              <dd>두 번째로 느껴지는 감정. 없으면 공란</dd>
+            </div>
+            <div>
+              <dt>FLAGS</dt>
+              <dd>문제 표시: FACE_MULTI · SPEAKER_OVERLAP · NOISE · TEXT_SHORT</dd>
+            </div>
+          </dl>
+        </details>
+      </div>
+
+      <div class="field">
+        <label for="annotator-id">작성자 ID</label>
+        <input type="text" id="annotator-id" placeholder="예: PYJ">
+      </div>
+
+      <p class="policy-note">애매함을 중립으로 처리하지 마세요. 세 번 확인해도 결정되지 않으면 AMBIG=1로 기록합니다.</p>
+
+      <div class="actions">
+        <button id="discard-btn" class="secondary">구간 폐기</button>
+        <span class="spacer"></span>
+        <span id="save-status" class="status" aria-live="polite"></span>
+        <button id="save-btn" class="primary" disabled>저장 후 다음 →</button>
+      </div>
+    </section>
+  </main>
+
+  <script type="module" src="/static/app.js?v=20260907-3"></script>
+</body>
+</html>
